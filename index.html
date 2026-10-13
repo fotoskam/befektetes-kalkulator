@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Független Befektetési & Költség-Összehasonlító Kalkulátor</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-16">
+
+    <!-- Fejléc -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-xl">
+                    📈
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-tight">Független Befektetési Műszerfal</h1>
+                    <p class="text-xs text-slate-400">Eszközosztályok, TKM költségek & TBSZ adómentesség összehasonlítása</p>
+                </div>
+            </div>
+            <div class="text-xs text-slate-400 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+                Pénzügyi Tanácsadói Modell
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 pt-8 space-y-8">
+
+        <!-- Havi Megtakarítás Gyorsválasztó & Csúszkák -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Havi Megtakarítási Keret
+                    </h2>
+                    <p class="text-xs text-slate-400">Válassz a gyakori összegek közül vagy állítsd be egyedileg a csúszkával!</p>
+                </div>
+                <!-- Gyorsgombok -->
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setQuickAmount(40000)" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition">40 000 Ft</button>
+                    <button onclick="setQuickAmount(60000)" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition">60 000 Ft</button>
+                    <button onclick="setQuickAmount(80000)" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition">80 000 Ft</button>
+                    <button onclick="setQuickAmount(90000)" class="px-3.5 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold rounded-xl transition">90 000 Ft</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                <!-- Csúszka 1: Havi összeg -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-300">Havi megtakarítás:</span>
+                        <span id="lblMonthly" class="font-bold text-amber-400">60 000 Ft</span>
+                    </div>
+                    <input type="range" id="sliderMonthly" min="10000" max="200000" step="5000" value="60000" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500" oninput="updateAll()">
+                </div>
+
+                <!-- Csúszka 2: Időtáv -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-300">Befektetési időtáv:</span>
+                        <span id="lblYears" class="font-bold text-amber-400">10 év</span>
+                    </div>
+                    <input type="range" id="sliderYears" min="1" max="25" step="1" value="10" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500" oninput="updateAll()">
+                </div>
+
+                <!-- Csúszka 3: Banki TKM díj -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-300">Banki alap éves költsége (TKM):</span>
+                        <span id="lblTKM" class="font-bold text-rose-400">2.80%</span>
+                    </div>
+                    <input type="range" id="sliderTKM" min="1.0" max="4.5" step="0.1" value="2.8" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-rose-500" oninput="updateAll()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Összegző kártyák -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+                <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Összes Befizetett Tőke</div>
+                <div id="cardTotalInvested" class="text-2xl font-extrabold text-white">0 Ft</div>
+                <div class="text-xs text-slate-500 mt-1">Saját zsebből félretett összeg</div>
+            </div>
+
+            <div class="bg-slate-900/60 border border-emerald-500/30 rounded-2xl p-5 bg-emerald-500/5">
+                <div class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">Saját ETF (TBSZ-en)</div>
+                <div id="cardETF" class="text-2xl font-extrabold text-emerald-400">0 Ft</div>
+                <div class="text-xs text-emerald-500/80 mt-1 font-medium">0,15% TKM | 0% adó</div>
+            </div>
+
+            <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+                <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Banki Menedzselt Alap</div>
+                <div id="cardBank" class="text-2xl font-extrabold text-slate-200">0 Ft</div>
+                <div id="cardBankSub" class="text-xs text-slate-400 mt-1">2,80% TKM/díj mellett</div>
+            </div>
+
+            <div class="bg-slate-900/60 border border-rose-500/30 rounded-2xl p-5 bg-rose-500/5">
+                <div class="text-rose-400 text-xs font-bold uppercase tracking-wider mb-1">Elveszített Banki Költség</div>
+                <div id="cardCostLoss" class="text-2xl font-extrabold text-rose-400">0 Ft</div>
+                <div class="text-xs text-rose-500/80 mt-1 font-medium">Ennyit vesz el a banki TKM!</div>
+            </div>
+        </div>
+
+        <!-- Grafikon -->
+        <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
+            <h2 class="text-lg font-bold text-white mb-4">Eszközosztályok és Költségek Vagyongyarapodási Görbéje</h2>
+            <div class="relative h-80 sm:h-96">
+                <canvas id="investChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Eszközosztályok részletes összehasonlítása -->
+        <div class="space-y-4 pt-4">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Az 4 Fő Befektetési Formák Összehasonlítása
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- 1. ETF -->
+                <div class="bg-slate-900/40 border border-emerald-500/30 rounded-2xl p-5 space-y-3 relative overflow-hidden">
+                    <div class="flex justify-between items-center">
+                        <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded border border-emerald-500/20">LEGHATÉKONYABB</span>
+                    </div>
+                    <h3 class="font-bold text-white text-base">Saját ETF (TBSZ)</h3>
+                    <div class="space-y-1.5 text-xs text-slate-300">
+                        <div class="flex justify-between"><span class="text-slate-400">Várható bruttó hozam:</span> <span class="font-bold text-white">8,0%</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Éves költség (TKM):</span> <span class="font-bold text-emerald-400">0,15%</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Adózás (5 év után):</span> <span class="font-bold text-emerald-400">0% Adó</span></div>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed pt-2 border-t border-slate-800">
+                        Közvetlen globális részvény-indexkövetés (pl. S&P 500, MSCI World). Nincsenek közvetítői állománydíjak, a profit 99%-a nálad marad.
+                    </p>
+                </div>
+
+                <!-- 2. Banki Alap -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="px-2 py-0.5 bg-rose-500/10 text-rose-400 text-xs font-bold rounded border border-rose-500/20">MAGAS KÖLTSÉG</span>
+                    </div>
+                    <h3 class="font-bold text-white text-base">Banki Menedzselt Alap</h3>
+                    <div class="space-y-1.5 text-xs text-slate-300">
+                        <div class="flex justify-between"><span class="text-slate-400">Várható bruttó hozam:</span> <span class="font-bold text-white">8,0%</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Éves költség (TKM):</span> <span class="font-bold text-rose-400" id="cardDetailTKM">2,80%</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Adózás:</span> <span class="font-bold text-slate-300">0 - 15%</span></div>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed pt-2 border-t border-slate-800">
+                        Unit-linked és menedzselt alapok. Ugyanazon a piacon fektet be, mint az ETF, de az alapkezelői és ügynöki díjak felélik a hozam harmadát.
+                    </p>
+                </div>
+
+                <!-- 3. Állampapír -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="px-2 py-0.5 bg-sky-500/10 text-sky-400 text-xs font-bold rounded border border-sky-500/20">KOCKÁZATMENTES</span>
+                    </div>
+                    <h3 class="font-bold text-white text-base">Magyar Állampapír</h3>
+                    <div class="space-y-1.5 text-xs text-slate-300">
+                        <div class="flex justify-between"><span class="text-slate-400">Várható nettó hozam:</span> <span class="font-bold text-white">5,5%</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Éves költség:</span> <span class="font-bold text-emerald-400">0,0%</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Adózás:</span> <span class="font-bold text-emerald-400">0% Adó</span></div>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed pt-2 border-t border-slate-800">
+                        Teljesen ingyenes számlavezetés a Kincstárnál. Biztonságos alapozás, de hosszú távon elmarad a tőkepiaci részvényhozamoktól.
+                    </p>
+                </div>
+
+                <!-- 4. Befektetési Arany -->
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-xs font-bold rounded border border-amber-500/20">ÉRTÉKŐRZŐ</span>
+                    </div>
+                    <h3 class="font-bold text-white text-base">Fizikai Befektetési Arany</h3>
+                    <div class="space-y-1.5 text-xs text-slate-300">
+                        <div class="flex justify-between"><span class="text-slate-400">Várható bruttó hozam:</span> <span class="font-bold text-white">5,0%</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Vételi árrés (Spread):</span> <span class="font-bold text-amber-400">4,0%</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Éves tartási díj:</span> <span class="font-bold text-emerald-400">0,0%</span></div>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed pt-2 border-t border-slate-800">
+                        Kiváló válságálló fizikai eszköz, de nem termel kamatot vagy osztalékot. Hosszú távú vagyonvédelmi és inflációkövető szerepet tölt be.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JS Logika -->
+    <script>
+        let chartInstance = null;
+
+        function setQuickAmount(amount) {
+            document.getElementById('sliderMonthly').value = amount;
+            updateAll();
+        }
+
+        function formatFt(val) {
+            return Math.round(val).toLocaleString('hu-HU') + ' Ft';
+        }
+
+        function updateAll() {
+            const monthly = parseFloat(document.getElementById('sliderMonthly').value);
+            const years = parseInt(document.getElementById('sliderYears').value);
+            const bankTKM = parseFloat(document.getElementById('sliderTKM').value) / 100;
+
+            // Címkék frissítése
+            document.getElementById('lblMonthly').innerText = formatFt(monthly);
+            document.getElementById('lblYears').innerText = years + ' év';
+            document.getElementById('lblTKM').innerText = (bankTKM * 100).toFixed(2) + '%';
+            document.getElementById('cardDetailTKM').innerText = (bankTKM * 100).toFixed(2) + '%';
+
+            const totalInvested = monthly * 12 * years;
+            document.getElementById('cardTotalInvested').innerText = formatFt(totalInvested);
+
+            // Modell paraméterek
+            const etfGrossRate = 0.08;
+            const etfTER = 0.0015; // 0.15% TKM
+            const etfNetRate = etfGrossRate - etfTER;
+
+            const bankNetRate = Math.max(0, etfGrossRate - bankTKM);
+
+            const bondRate = 0.055; // Állampapír 5.5%
+            const goldRate = 0.050; // Arany 5.0%
+            const goldSpread = 0.04; // 4% egyszeri árrés
+
+            const labels = [];
+            const etfData = [];
+            const bankData = [];
+            const bondData = [];
+            const goldData = [];
+
+            for (let y = 1; y <= years; y++) {
+                labels.push(`${y}. év`);
+                const months = y * 12;
+
+                // ETF (havi kamatfizetéssel)
+                const rETF = etfNetRate / 12;
+                const vETF = monthly * ((Math.pow(1 + rETF, months) - 1) / rETF);
+                etfData.push(vETF);
+
+                // Banki Alap
+                const rBank = bankNetRate / 12;
+                const vBank = monthly * ((Math.pow(1 + rBank, months) - 1) / rBank);
+                bankData.push(vBank);
+
+                // Állampapír
+                const rBond = bondRate / 12;
+                const vBond = monthly * ((Math.pow(1 + rBond, months) - 1) / rBond);
+                bondData.push(vBond);
+
+                // Arany (egyszeri levonás után)
+                const rGold = goldRate / 12;
+                const vGold = (monthly * (1 - goldSpread)) * ((Math.pow(1 + rGold, months) - 1) / rGold);
+                goldData.push(vGold);
+            }
+
+            const finalETF = etfData[years - 1];
+            const finalBank = bankData[years - 1];
+            const costLoss = finalETF - finalBank;
+
+            document.getElementById('cardETF').innerText = formatFt(finalETF);
+            document.getElementById('cardBank').innerText = formatFt(finalBank);
+            document.getElementById('cardBankSub').innerText = `${(bankTKM * 100).toFixed(2)}% TKM/díj mellett`;
+            document.getElementById('cardCostLoss').innerText = formatFt(costLoss);
+
+            renderChart(labels, etfData, bankData, bondData, goldData);
+        }
+
+        function renderChart(labels, etfData, bankData, bondData, goldData) {
+            const ctx = document.getElementById('investChart').getContext('2d');
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Saját ETF (TBSZ - 0.15% TKM)',
+                            data: etfData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            borderWidth: 3,
+                            tension: 0.3,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Banki Menedzselt Alap (Magas TKM)',
+                            data: bankData,
+                            borderColor: '#f43f5e',
+                            borderDash: [4, 4],
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Magyar Állampapír (5.5% nettó)',
+                            data: bondData,
+                            borderColor: '#38bdf8',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Befektetési Arany (5% bruttó)',
+                            data: goldData,
+                            borderColor: '#f59e0b',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatFt(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(51, 65, 85, 0.25)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(51, 65, 85, 0.25)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return (value / 1000000).toFixed(1) + 'M Ft';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = function() {
+            updateAll();
+        };
+    </script>
+</body>
+</html>
